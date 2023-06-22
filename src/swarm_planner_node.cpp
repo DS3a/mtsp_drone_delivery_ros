@@ -3,6 +3,7 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/int32.hpp"
 #include "std_msgs/msg/int32_multi_array.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
@@ -30,6 +31,7 @@ private:
   std::vector<Eigen::Vector2d> drones_goals;
 
   std::vector<std::vector<Eigen::Vector2d>> drone_paths;
+  std::vector<bool> drone_paths_found;
 
   rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr num_drones_subscription;
   rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr drones_active_subscription;
@@ -38,7 +40,9 @@ private:
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr drones_goals_subscription;
 
   std::vector<std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Path>>> path_publishers_vector;
+  std::vector<std::shared_ptr<rclcpp::Publisher<std_msgs::msg::Bool>>> path_found_publishers_vector;
 
+  rclcpp::TimerBase::SharedPtr paths_publisher_timer_;
 
   void num_drones_subscription_callback(const std_msgs::msg::Int32::SharedPtr msg);
   void drones_active_subscription_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg);
@@ -46,8 +50,11 @@ private:
   void drones_states_subscription_callback(const std_msgs::msg::Float64MultiArray::SharedPtr msg);
   void drones_goals_subscription_callback(const std_msgs::msg::Float64MultiArray::SharedPtr msg);
 
+  void plan_and_publish_paths();
+
   bool num_drones_initialized();
   bool check_planner_params();
+
 };
 
 SwarmPlannerNode::SwarmPlannerNode(): rclcpp::Node("swarm_planner_node") {
@@ -77,6 +84,14 @@ SwarmPlannerNode::SwarmPlannerNode(): rclcpp::Node("swarm_planner_node") {
                                                                                                 std::bind(&SwarmPlannerNode::drones_goals_subscription_callback,
                                                                                                           this,
                                                                                                           std::placeholders::_1));
+
+  this->paths_publisher_timer_ = this->create_wall_timer(std::chrono::milliseconds(500),
+                                                         std::bind(&SwarmPlannerNode::plan_and_publish_paths,
+                                                                   this));
+}
+
+void SwarmPlannerNode::plan_and_publish_paths() {
+
 }
 
 bool SwarmPlannerNode::num_drones_initialized() {
@@ -113,7 +128,10 @@ void SwarmPlannerNode::num_drones_subscription_callback(const std_msgs::msg::Int
       std::string drone_path_topic_name = "/drone_path";
       drone_path_topic_name.append(std::to_string(i));
       this->path_publishers_vector.push_back(
-              this->create_publisher<nav_msgs::msg::Path>(drone_path_topic_name, 10));
+        this->create_publisher<nav_msgs::msg::Path>(drone_path_topic_name, 10));
+      drone_path_topic_name.append("found");
+      this->path_found_publishers_vector.push_back(
+        this->create_publisher<std_msgs::msg::Bool>(drone_path_topic_name, 10));
     }
     this->num_drones_subscription.reset();
   } else {
