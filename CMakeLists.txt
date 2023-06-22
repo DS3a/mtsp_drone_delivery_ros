@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(template_pkg_ros2)
+project(mtsp_drone_delivery_ros)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -15,6 +15,8 @@ find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(PCL REQUIRED)
+find_package(Eigen REQUIRED)
 
 ### NOTE if you want to add python libs add them here
 ament_python_install_package(python_lib)
@@ -26,25 +28,31 @@ ament_python_install_package(python_lib)
 
 
 ### NOTE add Cpp nodes
-add_executable(node src/node.cpp)
-target_include_directories(node PUBLIC
+add_executable(swarm_planner_node src/swarm_planner_node.cpp)
+
+# target_link_libraries(swarm_planner_node PRIVATE
+#     Eigen3::Eigen
+# )
+
+target_include_directories(swarm_planner_node PUBLIC
 ### NOTE you can add additional include dirs for Cpp here
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 ### NOTE
   $<INSTALL_INTERFACE:include>)
-target_compile_features(node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+target_compile_features(swarm_planner_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
 ### NOTE add dependencies to the cpp target
-ament_target_dependencies(node
+ament_target_dependencies(swarm_planner_node
   "rclcpp"
   "std_msgs"
   "nav_msgs"
   "geometry_msgs"
+  "Eigen3"
 )
 ### NOTE
 
 
-install(TARGETS node
+install(TARGETS swarm_planner_node
   DESTINATION lib/${PROJECT_NAME})
 
 
