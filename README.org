@@ -1,0 +1,5 @@
+Check =CMakeLists.txt= and =package.xml= to change the name of the package
+
+dependencies can be added as usual
+
+additional notes to add nodes and libraries have been given in =CMakelists.txt=
