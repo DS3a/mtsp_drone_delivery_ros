@@ -8,6 +8,8 @@
 #include "std_msgs/msg/int32_multi_array.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
 #include "nav_msgs/msg/path.hpp"
+#include "swarm_planner.hpp"
+
 
 #include "Eigen/Dense"
 #include "Eigen/Core"
@@ -29,6 +31,8 @@ private:
   std::vector<double> drones_radii;
   std::vector<Eigen::Vector4d> drones_states;
   std::vector<Eigen::Vector2d> drones_goals;
+  std::shared_ptr<swarm_planner::SwarmConfigTracker> swarm_config_tracker;
+  std::unique_ptr<swarm_planner::SwarmPlannerSE2> swarm_planner;
 
   std::vector<std::vector<Eigen::Vector2d>> drone_paths;
   std::vector<bool> drone_paths_found;
@@ -60,6 +64,13 @@ private:
 SwarmPlannerNode::SwarmPlannerNode(): rclcpp::Node("swarm_planner_node") {
   RCLCPP_INFO_ONCE(this->get_logger(), "starting SwarmPlannerNode");
 
+  std::vector<Eigen::Vector2d> workspace_dims = std::vector<Eigen::Vector2d>();
+  workspace_dims.push_back(Eigen::Vector2d(2.25, -2.25));
+  workspace_dims.push_back(Eigen::Vector2d(2, -2));
+
+  this->swarm_config_tracker = std::make_shared<swarm_planner::SwarmConfigTracker>();
+  this->swarm_planner = std::make_unique<swarm_planner::SwarmPlannerSE2>(workspace_dims, this->swarm_config_tracker);
+
   this->num_drones_subscription = this->create_subscription<std_msgs::msg::Int32>(NUM_DRONES_TOPIC, 10,
                                                                                   std::bind(&SwarmPlannerNode::num_drones_subscription_callback,
                                                                                             this,
@@ -90,8 +101,14 @@ SwarmPlannerNode::SwarmPlannerNode(): rclcpp::Node("swarm_planner_node") {
                                                                    this));
 }
 
+// TODO
 void SwarmPlannerNode::plan_and_publish_paths() {
-
+  if (this->check_planner_params()) {
+    this->swarm_config_tracker->write_drone_states(this->drones_states);
+    this->swarm_config_tracker->write_drone_goals(this->drones_goals);
+    this->swarm_config_tracker->write_drone_active_vector(this->drones_active);
+    this->swarm_config_tracker->write_drone_radii(this->drones_radii);
+  }
 }
 
 bool SwarmPlannerNode::num_drones_initialized() {
@@ -111,18 +128,17 @@ bool SwarmPlannerNode::check_planner_params() {
         (this->drones_goals.size() == this->num_drones) &&
         (this->path_publishers_vector.size() == this->num_drones)) {
       return true;
-    } else {
-      return false;
     }
-  } else {
-    return false;
   }
+
+  return false;
 }
 
 
 void SwarmPlannerNode::num_drones_subscription_callback(const std_msgs::msg::Int32::SharedPtr msg) {
   if (!this->num_drones_initialized()) {
     this->num_drones = msg->data;
+    this->swarm_config_tracker->set_num_drones(this->num_drones);
     RCLCPP_INFO_ONCE(this->get_logger(), "setting num_drones to %d", this->num_drones);
     for (int i=0; i < this->num_drones; i++) {
       std::string drone_path_topic_name = "/drone_path";
@@ -135,7 +151,7 @@ void SwarmPlannerNode::num_drones_subscription_callback(const std_msgs::msg::Int
     }
     this->num_drones_subscription.reset();
   } else {
-    RCLCPP_INFO_ONCE(this->get_logger(), "num_drones subscription has not been shutdown, retaining value of %d for num_drones", this->num_drones);
+    RCLCPP_ERROR_ONCE(this->get_logger(), "num_drones subscription has not been shutdown, retaining value of %d for num_drones", this->num_drones);
   }
 }
 

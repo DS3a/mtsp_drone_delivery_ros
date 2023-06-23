@@ -22,6 +22,9 @@ find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen REQUIRED)
+find_package(Boost REQUIRED)
+find_package(ompl REQUIRED)
+
 
 ### NOTE if you want to add python libs add them here
 ament_python_install_package(python_lib)
@@ -32,17 +35,40 @@ ament_python_install_package(python_lib)
 # find_package(<dependency> REQUIRED)
 
 
+
+
+
+include_directories(
+  include
+  ${OpenCV_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
+  ${Boost_INCLUDE_DIRS}
+  ${OMPL_INCLUDE_DIRS}
+)
+
+add_library(swarm_planner 
+	src/swarm_planner.cpp
+	src/state_validity_checker.cpp
+	src/swarm_config_tracker.cpp
+)
+
+
+
+
 ### NOTE add Cpp nodes
 add_executable(swarm_planner_node src/swarm_planner_node.cpp)
 
-# target_link_libraries(swarm_planner_node PRIVATE
-#     Eigen3::Eigen
-# )
+target_link_libraries(swarm_planner_node
+  swarm_planner
+  ${OMPL_LIBRARIES}
+)
 
 target_include_directories(swarm_planner_node PUBLIC
+
 ### NOTE you can add additional include dirs for Cpp here
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-### NOTE
+  ${Boost_INCLUDE_DIRS}
+  ${OMPL_INCLUDE_DIRS}
   $<INSTALL_INTERFACE:include>)
 target_compile_features(swarm_planner_node PUBLIC c_std_99 cxx_std_17 cxx_std_20)  # Require C99 and C++17
 
