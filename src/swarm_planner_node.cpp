@@ -62,7 +62,7 @@ private:
 };
 
 SwarmPlannerNode::SwarmPlannerNode(): rclcpp::Node("swarm_planner_node") {
-  RCLCPP_INFO_ONCE(this->get_logger(), "starting SwarmPlannerNode");
+  RCLCPP_INFO(this->get_logger(), "starting SwarmPlannerNode");
 
   std::vector<Eigen::Vector2d> workspace_dims = std::vector<Eigen::Vector2d>();
   workspace_dims.push_back(Eigen::Vector2d(2.25, -2.25));
@@ -103,11 +103,34 @@ SwarmPlannerNode::SwarmPlannerNode(): rclcpp::Node("swarm_planner_node") {
 
 // TODO
 void SwarmPlannerNode::plan_and_publish_paths() {
+  RCLCPP_INFO(this->get_logger(), "the planner callback is called");
   if (this->check_planner_params()) {
+    RCLCPP_INFO(this->get_logger(), "all parameters are fine, planning the path");
     this->swarm_config_tracker->write_drone_states(this->drones_states);
     this->swarm_config_tracker->write_drone_goals(this->drones_goals);
     this->swarm_config_tracker->write_drone_active_vector(this->drones_active);
     this->swarm_config_tracker->write_drone_radii(this->drones_radii);
+
+    this->swarm_planner->plan_paths();
+    std::vector<bool> paths_found;
+    std::vector<std::vector<Eigen::Vector2d>> paths;
+
+    // NOTE possible error
+    std::tie(paths_found, paths) = this->swarm_planner->get_paths();
+
+    for (int i=0; i < this->num_drones; i++) {
+      if (this->drones_active[i]) {
+        bool path_found = paths_found[i];
+        std::vector<Eigen::Vector2d> path = paths[i];
+        std_msgs::msg::Bool path_found_msg;
+        path_found_msg.data = path_found;
+        nav_msgs::msg::Path path_msg;
+
+        this->path_found_publishers_vector[i]->publish(path_found_msg);
+  // std::vector<std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Path>>> path_publishers_vector;
+  // std::vector<std::shared_ptr<rclcpp::Publisher<std_msgs::msg::Bool>>> path_found_publishers_vector;
+      }
+    }
   }
 }
 
@@ -128,6 +151,8 @@ bool SwarmPlannerNode::check_planner_params() {
         (this->drones_goals.size() == this->num_drones) &&
         (this->path_publishers_vector.size() == this->num_drones)) {
       return true;
+    } else {
+      RCLCPP_WARN(this->get_logger(), " the planner params are not set, are all topics being published to?");
     }
   }
 
@@ -139,7 +164,7 @@ void SwarmPlannerNode::num_drones_subscription_callback(const std_msgs::msg::Int
   if (!this->num_drones_initialized()) {
     this->num_drones = msg->data;
     this->swarm_config_tracker->set_num_drones(this->num_drones);
-    RCLCPP_INFO_ONCE(this->get_logger(), "setting num_drones to %d", this->num_drones);
+    RCLCPP_INFO(this->get_logger(), "setting num_drones to %d", this->num_drones);
     for (int i=0; i < this->num_drones; i++) {
       std::string drone_path_topic_name = "/drone_path";
       drone_path_topic_name.append(std::to_string(i));
