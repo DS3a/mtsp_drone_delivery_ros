@@ -7,6 +7,7 @@
 #include "std_msgs/msg/int32.hpp"
 #include "std_msgs/msg/int32_multi_array.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/path.hpp"
 #include "swarm_planner.hpp"
 
@@ -101,6 +102,17 @@ SwarmPlannerNode::SwarmPlannerNode(): rclcpp::Node("swarm_planner_node") {
                                                                    this));
 }
 
+void generate_path_msg(nav_msgs::msg::Path* path_message, std::vector<Eigen::Vector2d> path) {
+  path_message->poses.clear();
+
+  for (int i=0; i < path.size(); i++) {
+    geometry_msgs::msg::PoseStamped pose_msg;
+    pose_msg.pose.position.x = path[i].x();
+    pose_msg.pose.position.y = path[i].y();
+    path_message->poses.push_back(pose_msg);
+  }
+}
+
 // TODO
 void SwarmPlannerNode::plan_and_publish_paths() {
   RCLCPP_INFO(this->get_logger(), "the planner callback is called");
@@ -121,14 +133,20 @@ void SwarmPlannerNode::plan_and_publish_paths() {
     for (int i=0; i < this->num_drones; i++) {
       if (this->drones_active[i]) {
         bool path_found = paths_found[i];
-        std::vector<Eigen::Vector2d> path = paths[i];
+        std::vector<Eigen::Vector2d> path_ = paths[i];
         std_msgs::msg::Bool path_found_msg;
         path_found_msg.data = path_found;
-        nav_msgs::msg::Path path_msg;
-
         this->path_found_publishers_vector[i]->publish(path_found_msg);
-  // std::vector<std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Path>>> path_publishers_vector;
-  // std::vector<std::shared_ptr<rclcpp::Publisher<std_msgs::msg::Bool>>> path_found_publishers_vector;
+        if (path_found) {
+          nav_msgs::msg::Path path_msg;
+
+          std::string drone_name = "drone";
+          drone_name.append(std::to_string(i));
+          generate_path_msg(&path_msg, path_);
+          path_msg.header.frame_id = drone_name;
+
+          this->path_publishers_vector[i]->publish(path_msg);
+        }
       }
     }
   }
