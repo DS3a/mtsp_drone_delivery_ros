@@ -102,7 +102,7 @@ namespace swarm_planner {
                     std::cout << "attempting to solve for a path for drone " << i << std::endl;
                     // std::cout << "the start point is " << start << std::endl;
                     // ob::PlannerStatus solved = this->planner_vector[i]->ob::Planner::solve(0.015);
-                    ob::PlannerStatus solved = planner->ob::Planner::solve(0.4);
+                    ob::PlannerStatus solved = planner->ob::Planner::solve(0.75);
                     std::cout << "attempt complete for drone " << i << std::endl;
                     if (solved) {
                         std::cout << "path for drone " << i << " found\n";

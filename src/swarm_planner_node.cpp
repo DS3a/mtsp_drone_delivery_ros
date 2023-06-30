@@ -124,6 +124,7 @@ void SwarmPlannerNode::plan_and_publish_paths() {
     this->swarm_config_tracker->write_drone_radii(this->drones_radii);
     RCLCPP_INFO(this->get_logger(), "written to the swarm config, planning the path");
 
+    std::cout << "planning paths\n";
     this->swarm_planner->plan_paths();
     std::vector<bool> paths_found;
     std::vector<std::vector<Eigen::Vector2d>> paths;
@@ -193,6 +194,7 @@ void SwarmPlannerNode::num_drones_subscription_callback(const std_msgs::msg::Int
       this->path_found_publishers_vector.push_back(
         this->create_publisher<std_msgs::msg::Bool>(drone_path_topic_name, 10));
     }
+    this->swarm_planner->initialize_planners();
     this->num_drones_subscription.reset();
   } else {
     RCLCPP_ERROR_ONCE(this->get_logger(), "num_drones subscription has not been shutdown, retaining value of %d for num_drones", this->num_drones);

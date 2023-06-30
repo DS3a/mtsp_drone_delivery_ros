@@ -4,6 +4,8 @@ namespace swarm_planner {
     SwarmConfigTracker::SwarmConfigTracker() {
         this->drone_states_ = std::make_shared<std::vector<Eigen::Vector4d>>();
         this->drone_goals_ = std::make_shared<std::vector<Eigen::Vector2d>>();
+        this->drone_active_ = std::make_shared<std::vector<bool>>();
+        this->drone_radii_ = std::make_shared<std::vector<double>>();
     }
 
     bool SwarmConfigTracker::num_drones_is_set() {

@@ -48,10 +48,10 @@ namespace swarm_planner {
         std::shared_ptr<std::vector<std::vector<Eigen::Vector2d>>> drone_paths;
         std::shared_ptr<std::vector<bool>> drones_path_found;
 
-        void initialize_planners();
 
     public:
         std::tuple<std::vector<bool>, std::vector<std::vector<Eigen::Vector2d>>> get_paths();
+        void initialize_planners();
         SwarmPlannerSE2(std::vector<Eigen::Vector2d> bounds, std::shared_ptr<SwarmConfigTracker> swarm_config_tracker);
         bool plan_paths();
         bool write_states_and_goals(std::vector<Eigen::Vector4d> drone_states,
