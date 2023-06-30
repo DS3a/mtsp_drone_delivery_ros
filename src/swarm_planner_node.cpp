@@ -117,11 +117,12 @@ void generate_path_msg(nav_msgs::msg::Path* path_message, std::vector<Eigen::Vec
 void SwarmPlannerNode::plan_and_publish_paths() {
   RCLCPP_INFO(this->get_logger(), "the planner callback is called");
   if (this->check_planner_params()) {
-    RCLCPP_INFO(this->get_logger(), "all parameters are fine, planning the path");
+    RCLCPP_INFO(this->get_logger(), "all parameters are fine, writing to the config");
     this->swarm_config_tracker->write_drone_states(this->drones_states);
     this->swarm_config_tracker->write_drone_goals(this->drones_goals);
     this->swarm_config_tracker->write_drone_active_vector(this->drones_active);
     this->swarm_config_tracker->write_drone_radii(this->drones_radii);
+    RCLCPP_INFO(this->get_logger(), "written to the swarm config, planning the path");
 
     this->swarm_planner->plan_paths();
     std::vector<bool> paths_found;
