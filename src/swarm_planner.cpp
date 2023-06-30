@@ -1,4 +1,5 @@
 #include "swarm_planner.hpp"
+#include <stdio.h>
 
 namespace swarm_planner {
     void SwarmPlannerSE2::initialize_planners() {
@@ -62,9 +63,9 @@ namespace swarm_planner {
                 // std::cout << "start position " << (*this->swarm_config_tracker_->drone_states_)[i] << std::endl;
                 planning_threads.push_back(std::jthread([&temp_paths, &temp_path_founds, i, this]() {
                     auto planner(std::make_shared<current_planner>(this->si_vector[i]));
-                    // planner->setRange(2.1);
+                    planner->setRange(0.9);
                     // planner->setNearestNeighbors();
-                    // planner->setKNearest(2);
+                    planner->setKNearest(20);
                     // planner->setGoalBias(0.1); // Adjust the goalBias parameter
                     // planner->setPruneThreshold(5.1); // Adjust the pruneThreshold parameter
 
@@ -84,10 +85,12 @@ namespace swarm_planner {
 
                     current_lock.unlock();
 
+                    printf("drone %d position (%f, %f)\n", i, temp_drone_state[0], temp_drone_state[1]);
                     start->as<ompl::base::SE2StateSpace::StateType>()->setXY(temp_drone_state[0], temp_drone_state[1]);
                     start->as<ompl::base::SE2StateSpace::StateType>()->setYaw(0);
 
-                    goal->as<ompl::base::SE2StateSpace::StateType>()->setXY(temp_drone_goal[0], temp_drone_goal[1]);
+                    printf("drone %d goal (%f, %f)\n", i, temp_drone_goal[0], temp_drone_goal[1]);
+                    goal->as<ompl::base::SE2StateSpace::StateType>()->setXY((double)temp_drone_goal[0], (double)temp_drone_goal[1]);
                     goal->as<ompl::base::SE2StateSpace::StateType>()->setYaw(0);
 
                     pdef->setStartAndGoalStates(start, goal);
@@ -102,7 +105,7 @@ namespace swarm_planner {
                     std::cout << "attempting to solve for a path for drone " << i << std::endl;
                     // std::cout << "the start point is " << start << std::endl;
                     // ob::PlannerStatus solved = this->planner_vector[i]->ob::Planner::solve(0.015);
-                    ob::PlannerStatus solved = planner->ob::Planner::solve(0.75);
+                    ob::PlannerStatus solved = planner->ob::Planner::solve(0.175);
                     std::cout << "attempt complete for drone " << i << std::endl;
                     if (solved) {
                         std::cout << "path for drone " << i << " found\n";
@@ -119,7 +122,7 @@ namespace swarm_planner {
                             const auto* se2_state = state->as<ob::SE2StateSpace::StateType>();
                             double x = se2_state->getX();
                             double y = se2_state->getY();
-                            std::cout << "Drone " << i << " path idx " << j << ": (" << x << ", " << y << ")\n";
+                            printf("Drone %d path idx %d (%f, %f)\n", i, j, x, y);
                             temp_paths[i].push_back(Eigen::Vector2d(x, y));
                         }
                     } else {

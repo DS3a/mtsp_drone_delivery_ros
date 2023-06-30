@@ -145,7 +145,7 @@ void SwarmPlannerNode::plan_and_publish_paths() {
           std::string drone_name = "drone";
           drone_name.append(std::to_string(i));
           generate_path_msg(&path_msg, path_);
-          path_msg.header.frame_id = drone_name;
+          path_msg.header.frame_id = "odom";
 
           this->path_publishers_vector[i]->publish(path_msg);
         }
@@ -233,8 +233,8 @@ void SwarmPlannerNode::drones_states_subscription_callback(const std_msgs::msg::
       RCLCPP_ERROR_STREAM(this->get_logger(), "size of the drones_state_array is " << drones_states_vector.size() << " when it is supposed to be " << 4 * this->num_drones);
     } else {
       this->drones_states.clear();
-      for (int i=0; i < 4 * this->num_drones; i=i+4) {
-        this->drones_states.push_back(Eigen::Vector4d(drones_states_vector[i], drones_states_vector[i+1], drones_states_vector[i+2], drones_states_vector[i+3]));
+      for (int i=0; i < this->num_drones; i++) {
+        this->drones_states.push_back(Eigen::Vector4d(drones_states_vector[4*i], drones_states_vector[4*i+1], drones_states_vector[4*i+2], drones_states_vector[4*i+3]));
       }
     }
   }
@@ -247,8 +247,8 @@ void SwarmPlannerNode::drones_goals_subscription_callback(const std_msgs::msg::F
       RCLCPP_ERROR_STREAM(this->get_logger(), "size of the drones_goals_array is " << drones_goals_vector.size() << " when it is supposed to be " << 2 * this->num_drones);
     } else {
       this->drones_goals.clear();
-      for (int i=0; i < 2 * this->num_drones; i=i+2) {
-        this->drones_goals.push_back(Eigen::Vector2d(drones_goals_vector[i], drones_goals_vector[i+1]));
+      for (int i=0; i < this->num_drones; i++) {
+        this->drones_goals.push_back(Eigen::Vector2d(drones_goals_vector[2*i], drones_goals_vector[2*i+1]));
       }
     }
   }
