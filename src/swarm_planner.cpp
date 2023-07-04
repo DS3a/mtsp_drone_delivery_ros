@@ -1,4 +1,5 @@
 #include "swarm_planner.hpp"
+#include <thread>
 #include <stdio.h>
 
 namespace swarm_planner {
@@ -58,10 +59,10 @@ namespace swarm_planner {
             std::vector<std::vector<Eigen::Vector2d>> temp_paths(this->swarm_config_tracker_->num_drones);
             std::vector<bool> temp_path_founds(this->swarm_config_tracker_->num_drones, false);
 
-            std::vector<std::jthread> planning_threads;
+            std::vector<std::thread> planning_threads;
             for (int i = 0; i < this->swarm_config_tracker_->num_drones; i++) {
                 // std::cout << "start position " << (*this->swarm_config_tracker_->drone_states_)[i] << std::endl;
-                planning_threads.push_back(std::jthread([&temp_paths, &temp_path_founds, i, this]() {
+                planning_threads.push_back(std::thread([&temp_paths, &temp_path_founds, i, this]() {
                     auto planner(std::make_shared<current_planner>(this->si_vector[i]));
                     planner->setRange(0.9);
                     // planner->setNearestNeighbors();
