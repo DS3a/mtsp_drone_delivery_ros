@@ -97,7 +97,7 @@ SwarmPlannerNode::SwarmPlannerNode(): rclcpp::Node("swarm_planner_node") {
                                                                                                           this,
                                                                                                           std::placeholders::_1));
 
-  this->paths_publisher_timer_ = this->create_wall_timer(std::chrono::milliseconds(85),
+  this->paths_publisher_timer_ = this->create_wall_timer(std::chrono::milliseconds(5),
                                                          std::bind(&SwarmPlannerNode::plan_and_publish_paths,
                                                                    this));
 }
