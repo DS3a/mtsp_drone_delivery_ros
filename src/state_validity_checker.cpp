@@ -30,9 +30,9 @@ namespace swarm_planner {
         double drone_speed = calculate_distance(current_drone_state[2], 0, 0, current_drone_state[3]);
         // check function definition to clarify this, drone_state[2] is x_vel and drone_state[3] is y_vel
 
-        // if (drone_speed == 0) {
-        //     drone_speed = 0.00000000001; // to prevent divide-by-zero errors
-        // }
+        if (drone_speed == 0) {
+            drone_speed = 0.1; // to prevent divide-by-zero errors
+        }
 
         double time_to_reach_sampled_state = dist_to_sampled_point / drone_speed;
         // TODO propagate the state of each drone in the for loop by this time and avoid those regions as well.
