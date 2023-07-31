@@ -40,6 +40,8 @@ namespace swarm_planner {
         for (int i=0; i < this->swarm_config_tracker_->drone_states_->size(); i++) {
             if (i == this->drone_index_) {
                 continue;
+            } else if (this->swarm_config_tracker_->drone_active_ != true) {
+                continue;
             }
             // TODO check if drone is active, continue the loop if it isn't
             Eigen::Vector4d drone_state = (*this->swarm_config_tracker_->drone_states_)[i];
