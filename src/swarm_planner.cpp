@@ -8,11 +8,12 @@ namespace swarm_planner {
         for (int i=0; i < this->swarm_config_tracker_->num_drones; i++) {
             std::cout << "initializtion conditions met, initializing stuff\n";
             this->si_vector.push_back(std::make_shared<ob::SpaceInformation>(this->space));
+            this->si_vector[i]->setup();
             this->state_validity_checker_vector.push_back(std::make_shared<SwarmStateValidityChecker>(this->si_vector[i]));
             this->state_validity_checker_vector[i]->set_drone_index(i);
             this->state_validity_checker_vector[i]->set_swarm_config_tracker(this->swarm_config_tracker_);
             this->si_vector[i]->setStateValidityChecker(this->state_validity_checker_vector[i]);
-            this->planner_vector.push_back(std::make_shared<current_planner>(this->si_vector[i]));
+            // this->planner_vector.push_back(std::make_shared<current_planner>(this->si_vector[i]));
         }
 
         std::cout << this->si_vector.size() << " initialized [n] drones\n";
@@ -52,21 +53,23 @@ namespace swarm_planner {
             std::cout << "there are " << this->swarm_config_tracker_->num_drones << "drones and " << this->si_vector.size() << "vector elememts\n";
             return false; // for now. TODO keep track of which drones are joining and separating and maintain si and planners accordingly
         } else {
+            std::cout << "all conditions have been met, planning paths now\n";
             this->drone_paths->resize(this->swarm_config_tracker_->num_drones);
             this->drones_path_found->resize(this->swarm_config_tracker_->num_drones);
 
-            // std::cout << "resized the drone paths\n";
+            std::cout << "resized the drone paths\n";
             std::vector<std::vector<Eigen::Vector2d>> temp_paths(this->swarm_config_tracker_->num_drones);
             std::vector<bool> temp_path_founds(this->swarm_config_tracker_->num_drones, false);
 
             std::vector<std::thread> planning_threads;
             for (int i = 0; i < this->swarm_config_tracker_->num_drones; i++) {
-
+                // std::cout << "initializing planning for drone " << i << std::endl;
                 if ((*this->swarm_config_tracker_->drone_active_)[i]) {
-                    // std::cout << "start position " << (*this->swarm_config_tracker_->drone_states_)[i] << std::endl;
+                    std::cout << "start position " << (*this->swarm_config_tracker_->drone_states_)[i] << std::endl;
                     planning_threads.push_back(std::thread([&temp_paths,
                                                             &temp_path_founds, i,
                                                             this]() {
+                        // auto si_
                         auto planner(
                             std::make_shared<current_planner>(this->si_vector[i]));
                         planner->setRange(0.9);
