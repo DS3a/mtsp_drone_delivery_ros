@@ -159,16 +159,16 @@ namespace swarm_planner {
                                 double x = se2_state->getX();
                                 double y = se2_state->getY();
                                 printf("Drone %d path idx %d (%f, %f)\n", i, j, x, y);
-                                if (j!=0) {
-                                    float distance = (temp_paths[i][j-1] - Eigen::Vector2d(x, y)).norm();
-                                    if (distance > RESOLUTION) {
-                                        int num_points = 1 + (distance/RESOLUTION);
-                                        std::vector<Eigen::Vector2d> interpolated_pts = generate_points_between(temp_paths[i][j-1], Eigen::Vector2d(x, y), num_points);
-                                        for (const Eigen::Vector2d& point : interpolated_pts) {
-                                            temp_paths[i].push_back(point);
-                                        }
-                                    }
-                                }
+                                // if (j!=0) {
+                                //     float distance = (temp_paths[i][j-1] - Eigen::Vector2d(x, y)).norm();
+                                //     if (distance > RESOLUTION) {
+                                //         int num_points = 1 + (distance/RESOLUTION);
+                                //         std::vector<Eigen::Vector2d> interpolated_pts = generate_points_between(temp_paths[i][j-1], Eigen::Vector2d(x, y), num_points);
+                                //         for (const Eigen::Vector2d& point : interpolated_pts) {
+                                //             temp_paths[i].push_back(point);
+                                //         }
+                                //     }
+                                // }
                                 temp_paths[i].push_back(Eigen::Vector2d(x, y));
                             }
                         } else {
