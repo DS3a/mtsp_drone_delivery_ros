@@ -2,6 +2,21 @@
 #include <thread>
 #include <stdio.h>
 
+
+#define RESOLUTION 0.05
+
+std::vector<Eigen::Vector2d> generate_points_between(const Eigen::Vector2d& a, const Eigen::Vector2d& b, int n) {
+    std::vector<Eigen::Vector2d> points;
+
+    for (int i = 0; i < n; ++i) {
+        double t = static_cast<double>(i) / (n - 1); // Generate points evenly between [0, 1]
+        Eigen::Vector2d point = (1 - t) * a + t * b; // Linear interpolation between a and b
+        points.push_back(point);
+    }
+
+    return points;
+}
+
 namespace swarm_planner {
     void SwarmPlannerSE2::initialize_planners() {
         std::cout << "[SwarmPlannerSE2::initialize_planners] there are " << this->swarm_config_tracker_->num_drones << " drones\n";
@@ -69,7 +84,6 @@ namespace swarm_planner {
                     planning_threads.push_back(std::thread([&temp_paths,
                                                             &temp_path_founds, i,
                                                             this]() {
-                        // auto si_
                         auto planner(
                             std::make_shared<current_planner>(this->si_vector[i]));
                         planner->setRange(0.9);
@@ -145,6 +159,16 @@ namespace swarm_planner {
                                 double x = se2_state->getX();
                                 double y = se2_state->getY();
                                 printf("Drone %d path idx %d (%f, %f)\n", i, j, x, y);
+                                if (j!=0) {
+                                    float distance = (temp_paths[i][j-1] - Eigen::Vector2d(x, y)).norm();
+                                    if (distance > RESOLUTION) {
+                                        int num_points = 1 + (distance/RESOLUTION);
+                                        std::vector<Eigen::Vector2d> interpolated_pts = generate_points_between(temp_paths[i][j-1], Eigen::Vector2d(x, y), num_points);
+                                        for (const Eigen::Vector2d& point : interpolated_pts) {
+                                            temp_paths[i].push_back(point);
+                                        }
+                                    }
+                                }
                                 temp_paths[i].push_back(Eigen::Vector2d(x, y));
                             }
                         } else {
